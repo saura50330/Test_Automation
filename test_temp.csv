@@ -1,7 +1,8 @@
 SN,CMD,PERAM_01,PERAM_02,PERAM_03,ITERATIONS,EXPECTED,OBSERVED,RESULT,TIME_STAMP,DURATION,REMARK
-1,CONNECT,00:00:00:00,Saura,1234,1,20 30 10 1F,,,,,Connect to Bluetooth device
+1,CONNECT,saura,,1234,1,PASS,,,,,Connect to Bluetooth device
 2,FFR ,,,,3,PASS,,,,,
 3,ENROL_MAC ,,,,1,FAIL,,,,,
 5,FFR ,,,,0,PASS,,,,,
-4,DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
-5,CONNECT,00:00:00:01,AFT,1234,1,20 30 10 1F,,,,,Connect to Bluetooth device
+6,DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
+7,SEND_BLE,b'\x11\x00\x00\x00\x00',,,1,PASS,,,,,Send data to device
+8,CONNECT,00:00:00:01,,,1,PASS,,,,,Connect to Bluetooth device

@@ -16,16 +16,16 @@ outpath_file=""
 temp_file_data =""
 sock = None
 bd_addr = None
-def FFR(arg1, arg2, arg3):
+def DUT_FFR(arg1, arg2, arg3):
 	return "PASS"
  
-def ENROL_MAC(arg1, arg2, arg3):
+def DUT_ENROL_MAC(arg1, arg2, arg3):
 	return "FAIL"
 	
-def DELAY(arg1, arg2, arg3):
+def WIN_DELAY(arg1, arg2, arg3):
 	time.sleep(float(arg1))
 	return "PASS"
-def CONNECT(arg1, arg2, arg3):
+def WIN_CONNECT(arg1, arg2, arg3):
 	#Create an array with all the MAC
 	#addresses of the detected devices
 	nearby_devices = bluetooth.discover_devices()
@@ -47,6 +47,7 @@ def CONNECT(arg1, arg2, arg3):
 		#Close socket if connected previouslly 
 		print "Disconnecting :" + str(bd_addr)
 		sock.close()
+        sock = None
 	if(num_final >= 0):
 		bd_addr = nearby_devices[num_final]
 		print "Connecting " + str(bd_addr) + " " + bluetooth.lookup_name( i )
@@ -59,7 +60,7 @@ def CONNECT(arg1, arg2, arg3):
 		print "Device Not Found  " + arg1 
 		return "FAIL"
 	
-def SEND_BLE(arg1, arg2, arg3): # send data to connected socat, pre requisit CONNECT should go Success
+def WIN_SEND_BLE(arg1, arg2, arg3): # send data to connected socat, pre requisit CONNECT should go Success
 	global sock
 	sock.send(b'\x11\x00\x00\x00\x00')
 	return "PASS"

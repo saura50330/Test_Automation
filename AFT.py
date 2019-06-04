@@ -1,5 +1,5 @@
 #run below command
-#C:\Python27\python.exe C:\Users\ndhavalikar\Desktop\Allegion_Nand\Personal\GIT\BL_Pic16f-master\test_automation\AFT.py
+#C:\Python27\python.exe C:\Users\ndhavalikar\Desktop\Allegion_Nand\Personal\GIT\BL_Pic16f-master\test_automation\Test_Automation-master\AFT.py
 #C:\Python27\python.exe C:\Users\acer\Desktop\MASTER_DOCUMENT_V1\START_UP\GIT_Repo\Plat_Pic16f\5_Test_Automation\Test_Automation\AFT.py
 #give below test templet as input
 
@@ -12,58 +12,106 @@ import bluetooth
 import csv
 import datetime
 import time
+DATA_SIZE = 64
 outpath_file=""
 temp_file_data =""
 sock = None
 bd_addr = None
+DUT_MAC = [20,255,254,200]
 def DUT_FFR(arg1, arg2, arg3):
-	return "PASS"
+    #-----------------------------FDR sequence turn off battery, hold switch turn on power release switch
+    print"FDR sequence started"
+    AFT_RELAY(b'\xF1\x00',"","") # turn off Power
+    time.sleep(1)
+    AFT_DIO(b'\xF2\x01',"","")   # press switch
+    time.sleep(0.5)
+    AFT_RELAY(b'\xF1\x01',"","") # turn ON Power
+    time.sleep(2)
+    AFT_DIO(b'\xF2\x00',"","")   # Realease switch
+    #validate FDR
+    #read fdr eep region and check
+    err_flag = 0
+    i = 0xF0
+    while(i<0xF7):
+        i = i+1
+        temp_data_1 = (b'\x04\x7F') + bytes(chr(i), 'ascii') + (b'\x00\x00')
+        temp_data = WIN_SEND_RCV_BLE(temp_data_1, "", "")
+        expected_data = (b'\x04\x7F') + bytes(chr(i), 'ascii') + (b'\x00\xFF')
+        if( expected_data != temp_data ): # check if all data set to 0xFF
+            err_flag = 1
+            break;
+    if(err_flag):
+        print"FDR Fail"
+        return "FAIL"
+    print"FDR Pass"
+    return "PASS"
  
 def DUT_ENROL_MAC(arg1, arg2, arg3):
-	return "FAIL"
-	
+    i = 0xF4
+    while( i < 0Xf8) :
+        temp_data = (b'\x02\x7F') + bytes(chr(i), 'ascii') + (b'\x00') + bytes(chr(DUT_MAC[i]), 'ascii') # WRITE 4 BYTES OF mac
+        WIN_SEND_RCV_BLE(temp_data, "", "")
+        i += 1
+        print "MAC written"
+    return "PASS"
+    
 def WIN_DELAY(arg1, arg2, arg3):
-	time.sleep(float(arg1))
-	return "PASS"
+    time.sleep(float(arg1))
+    return "PASS"
+    
 def WIN_CONNECT(arg1, arg2, arg3):
-	#Create an array with all the MAC
-	#addresses of the detected devices
-	nearby_devices = bluetooth.discover_devices()
-	num = 0
-	num_final = -1
-	for i in nearby_devices:
-		if ':' in 'arg1':
-			if(arg1 == i):
-				num_final = num
-				break
-		else:
-			if(arg1 == bluetooth.lookup_name( i )):
-				num_final = num
-				break; # got the name
-		num = num + 1
-	global sock
-	global bd_addr
-	if(sock):
-		#Close socket if connected previouslly 
-		print "Disconnecting :" + str(bd_addr)
-		sock.close()
+    #Create an array with all the MAC
+    #addresses of the detected devices
+    nearby_devices = bluetooth.discover_devices()
+    num = 0
+    num_final = -1
+    for i in nearby_devices:
+        if ':' in 'arg1':
+            if(arg1 == i):
+                num_final = num
+                break
+        else:
+            if(arg1 == bluetooth.lookup_name( i )):
+                num_final = num
+                break; # got the name
+        num = num + 1
+    global sock
+    global bd_addr
+    if(sock):
+        #Close socket if connected previouslly 
+        print "Disconnecting :" + str(bd_addr)
+        sock.close()
         sock = None
-	if(num_final >= 0):
-		bd_addr = nearby_devices[num_final]
-		print "Connecting " + str(bd_addr) + " " + bluetooth.lookup_name( i )
-		port = 1
-		sock = bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-		sock.connect((bd_addr, port))
-		print "Connected " + str(bd_addr) + " " + bluetooth.lookup_name( i )
-		return "PASS"
-	else:
-		print "Device Not Found  " + arg1 
-		return "FAIL"
-	
+    if(num_final >= 0):
+        bd_addr = nearby_devices[num_final]
+        print "Connecting " + str(bd_addr) + " " + bluetooth.lookup_name( i )
+        port = 1
+        sock = bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+        sock.connect((bd_addr, port))
+        print "Connected " + str(bd_addr) + " " + bluetooth.lookup_name( i )
+        return "PASS"
+    else:
+        print "Device Not Found  " + arg1 
+        return "FAIL"
+    
 def WIN_SEND_BLE(arg1, arg2, arg3): # send data to connected socat, pre requisit CONNECT should go Success
-	global sock
-	sock.send(b'\x11\x00\x00\x00\x00')
-	return "PASS"
+    global sock
+    sock.send(arg1)
+    return "PASS"
+
+def WIN_SEND_RCV_BLE(arg1, arg2, arg3): # send data to connected socat, pre requisit CONNECT should go Success and wait for the responce for arg2 s
+    global sock
+    data = ""
+    sock.send(arg1)
+    time.sleep(0.15)  # responce time is around 100 ms
+    data = sock.recv(DATA_SIZE)
+    if (data) :
+        print "Received: " + data
+        return (data)
+       
+    else:
+        print "Received: Nothing !!!" 
+        return("")
 #---------------connect BLE docgal to PC-------------------
 
 # try connecing to ble dongal
@@ -86,74 +134,74 @@ file_object.close()
 lines = ""
 
 with open(path_file, 'r') as csvFile:
-	reader = csv.DictReader(csvFile)
-	fieldnames = ('SN', 'CMD', 'PERAM_01','PERAM_02','PERAM_03','ITERATIONS','EXPECTED','OBSERVED','RESULT','TIME_STAMP','DURATION','REMARK')
-	#lines = list(reader)
-	#print reader
-	myFile = open(outpath_file, 'wb')
-	writer = csv.DictWriter(myFile, fieldnames=fieldnames)
-	writer.writeheader()
-	myFile.close()
-	for row in reader:	  # go throug each row 
-		#------------Read COmmand in each row and execute it by passing perameters---------------------------------
-		iterations = -1
-		iterations_base = 0
-		out = "ERROR"
-		observed_out = ""
-		fail_count = 0
-		time_now = time.time()
-		if(row != None):
-			tmp_cmd = row['CMD'].strip() #remove tab and white spaces
-			tmp_per1 = row['PERAM_01'].strip()
-			tmp_per2 = row['PERAM_02'].strip()
-			tmp_per3 = row['PERAM_03'].strip()	# read nth row	command
-			expected_out = row['EXPECTED'].strip()
-			observed_out = ""
-			print"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" # command spliter
-			if(iterations is - 1):
-				temp_str = (row['ITERATIONS'].strip())
-				if (temp_str.isdigit()):
-					iterations = int(temp_str,10)
-					iterations_base = iterations
-					if(iterations == 0):
-						print "Skipping :" + tmp_cmd
-					else:
-						print "Executing :" + tmp_cmd + " for " + str(iterations) + " Iterations"
-			while(iterations > 0) :
-				try:
-					observed_out = locals()[tmp_cmd](tmp_per1, tmp_per2, tmp_per3)
-				except:
-					print"Error : Executing command (" + tmp_cmd + ")"
-				#print "OBS" + observed_out
-				#print "EXP" + expected_out
-				if(expected_out	 == observed_out): #and execute it
-					out_temp = "PASS"
-				else:
-					out_temp = "FAIL"
-					fail_count = fail_count + 1;
-				iterations = iterations - 1
-				if((out is "ERROR" ) or (out is "PASS" )):	# update out if its value is ERROR or PASS 
-					out = out_temp
-			#-----------Read and update the Result-----------------------------------------------------------
-			if((fail_count != 0) and (iterations_base > 1)):
-				row['RESULT'] = out + str(fail_count)
-			else:
-				if(iterations_base > 0):
-					row['RESULT'] = out
-				else:
-					row['RESULT'] = "SKIPPED"
-			time_after = time.time()
-			row['OBSERVED'] = observed_out
-			row['TIME_STAMP'] = datetime.datetime.fromtimestamp(time_now).strftime('%Y-%m-%d %H:%M:%S')
-			row['DURATION'] = str(time_after - time_now)
-			myFile = open(outpath_file, 'ab+')
-			writer = csv.DictWriter(myFile, fieldnames=fieldnames)	  
-			writer.writerow(row)
-			myFile.close()
-			#print row
-		else:
-			break
-	  
+    reader = csv.DictReader(csvFile)
+    fieldnames = ('SN', 'CMD', 'PERAM_01','PERAM_02','PERAM_03','ITERATIONS','EXPECTED','OBSERVED','RESULT','TIME_STAMP','DURATION','REMARK')
+    #lines = list(reader)
+    #print reader
+    myFile = open(outpath_file, 'wb')
+    writer = csv.DictWriter(myFile, fieldnames=fieldnames)
+    writer.writeheader()
+    myFile.close()
+    for row in reader:    # go throug each row 
+        #------------Read COmmand in each row and execute it by passing perameters---------------------------------
+        iterations = -1
+        iterations_base = 0
+        out = "ERROR"
+        observed_out = ""
+        fail_count = 0
+        time_now = time.time()
+        if(row != None):
+            tmp_cmd = row['CMD'].strip() #remove tab and white spaces
+            tmp_per1 = row['PERAM_01'].strip()
+            tmp_per2 = row['PERAM_02'].strip()
+            tmp_per3 = row['PERAM_03'].strip()  # read nth row  command
+            expected_out = row['EXPECTED'].strip()
+            observed_out = ""
+            print"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" # command spliter
+            if(iterations is - 1):
+                temp_str = (row['ITERATIONS'].strip())
+                if (temp_str.isdigit()):
+                    iterations = int(temp_str,10)
+                    iterations_base = iterations
+                    if(iterations == 0):
+                        print "Skipping :" + tmp_cmd
+                    else:
+                        print "Executing :" + tmp_cmd + " for " + str(iterations) + " Iterations"
+            while(iterations > 0) :
+                try:
+                    observed_out = locals()[tmp_cmd](tmp_per1, tmp_per2, tmp_per3)
+                except:
+                    print"Error : Executing command (" + tmp_cmd + ")"
+                #print "OBS" + observed_out
+                #print "EXP" + expected_out
+                if(expected_out  == observed_out): #and execute it
+                    out_temp = "PASS"
+                else:
+                    out_temp = "FAIL"
+                    fail_count = fail_count + 1;
+                iterations = iterations - 1
+                if((out is "ERROR" ) or (out is "PASS" )):  # update out if its value is ERROR or PASS 
+                    out = out_temp
+            #-----------Read and update the Result-----------------------------------------------------------
+            if((fail_count != 0) and (iterations_base > 1)):
+                row['RESULT'] = out + str(fail_count)
+            else:
+                if(iterations_base > 0):
+                    row['RESULT'] = out
+                else:
+                    row['RESULT'] = "SKIPPED"
+            time_after = time.time()
+            row['OBSERVED'] = observed_out
+            row['TIME_STAMP'] = datetime.datetime.fromtimestamp(time_now).strftime('%Y-%m-%d %H:%M:%S')
+            row['DURATION'] = str(time_after - time_now)
+            myFile = open(outpath_file, 'ab+')
+            writer = csv.DictWriter(myFile, fieldnames=fieldnames)    
+            writer.writerow(row)
+            myFile.close()
+            #print row
+        else:
+            break
+      
 csvFile.close()
 
 #end

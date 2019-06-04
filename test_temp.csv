@@ -6,3 +6,12 @@ SN,CMD,PERAM_01,PERAM_02,PERAM_03,ITERATIONS,EXPECTED,OBSERVED,RESULT,TIME_STAMP
 6,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
 7,WIN_SEND_BLE,b'\x11\x00\x00\x00\x00',,,1,PASS,,,,,Send data to device
 8,WIN_CONNECT,00:00:00:01,,,1,PASS,,,,,Connect to Bluetooth device
+9,AFT_RELAY,b'\xF1\x00\',,,0,,,,,,Relay OFF
+10,AFT_RELAY,b'\xF1\x01\',,,0,,,,,,Relay ON
+11,AFT_SWITCH,b'\xF2\x00\',,,0,,,,,,Press Switch
+11,AFT_SWITCH,b'\xF2\x01\',,,0,,,,,,Release Switch
+12,AFT_DIO,b'\xF3\x00\',,,0,,,,,,Read DIO value
+12,AFT_DIO,b'\xF3\x01\0x01',,,0,,,,,,Set DIO value
+12,AFT_DIO,b'\xF3\x01\0x00',,,0,,,,,,Clear DIO value
+13,AFT_ADC,b'\xF4\x00\',,,0,,,,,,Read ADC value
+14,AFT_FLASH,b'\xF3\x00\',,,0,,,,,,Flash Fimware to AFT

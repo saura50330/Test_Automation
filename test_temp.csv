@@ -1,17 +1,21 @@
 SN,CMD,PERAM_01,PERAM_02,PERAM_03,ITERATIONS,EXPECTED,OBSERVED,RESULT,TIME_STAMP,DURATION,REMARK
-1,WIN_CONNECT,saura,,1234,1,PASS,,,,,Connect to Bluetooth device
-2,DUT_FFR ,,,,3,PASS,,,,,
-3,DUT_ENROL_MAC ,,,,1,FAIL,,,,,
-5,DUT_FFR ,,,,0,PASS,,,,,
+1,DUT_FFR ,,,,1,PASS,,,,,
+2,WIN_CONNECT,CD1235,,1235,1,PASS,,,,,Connect to Bluetooth device
+3,AFT_FECT_DATA,C:\Users\acer\Desktop\DID_01010101.FECT,,,1,PASS,,,,,Flash Fimware to AFT
+4,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
+5,DUT_ENROL_MAC ,"20,255,254,200",,,1,PASS,,,,,
 6,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
-7,WIN_SEND_BLE,b'\x11\x00\x00\x00\x00',,,1,PASS,,,,,Send data to device
-8,WIN_CONNECT,00:00:00:01,,,1,PASS,,,,,Connect to Bluetooth device
-9,AFT_RELAY,b'\xF1\x00\',,,0,,,,,,Relay OFF
-10,AFT_RELAY,b'\xF1\x01\',,,0,,,,,,Relay ON
-11,AFT_SWITCH,b'\xF2\x00\',,,0,,,,,,Press Switch
-11,AFT_SWITCH,b'\xF2\x01\',,,0,,,,,,Release Switch
-12,AFT_DIO,b'\xF3\x00\',,,0,,,,,,Read DIO value
-12,AFT_DIO,b'\xF3\x01\0x01',,,0,,,,,,Set DIO value
-12,AFT_DIO,b'\xF3\x01\0x00',,,0,,,,,,Clear DIO value
-13,AFT_ADC,b'\xF4\x00\',,,0,,,,,,Read ADC value
-14,AFT_FLASH,b'\xF3\x00\',,,0,,,,,,Flash Fimware to AFT
+7,AFT_FLASH,C:\Users\acer\Desktop\test_.OTA,,,1,PASS,,,,,Flash Fimware to AFT
+8,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
+9,AFT_READ_VERSION,1,,,1,PASS,,,,,Generate Delay (seconds) 
+10,WIN_SEND_BLE,b'\x11\x00\x00\x00\x00',,,1,PASS,,,,,Send data to device
+11,WIN_CONNECT,00:00:00:01,,,0,PASS,,,,,Connect to Bluetooth device
+12,AFT_RELAY,b'\xF1\x00\',,,0,,,,,,Relay OFF
+13,AFT_RELAY,b'\xF1\x01\',,,0,,,,,,Relay ON
+14,AFT_SWITCH,b'\xF2\x00\',,,0,,,,,,Press Switch
+15,AFT_SWITCH,b'\xF2\x01\',,,0,,,,,,Release Switch
+16,AFT_DIO,b'\xF3\x00\',,,0,,,,,,Read DIO value
+17,AFT_DIO,b'\xF3\x01\0x01',,,0,,,,,,Set DIO value
+18,AFT_DIO,b'\xF3\x01\0x00',,,0,,,,,,Clear DIO value
+19,AFT_ADC,b'\xF4\x00\',,,0,,,,,,Read ADC value
+20,AFT_FLASH,b'\xF3\x00\',,,0,,,,,,Flash Fimware to AFT

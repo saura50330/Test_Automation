@@ -1,21 +1,32 @@
 SN,CMD,PERAM_01,PERAM_02,PERAM_03,ITERATIONS,EXPECTED,OBSERVED,RESULT,TIME_STAMP,DURATION,REMARK
-1,DUT_FFR ,,,,1,PASS,,,,,
-2,WIN_CONNECT,CD1235,,1235,1,PASS,,,,,Connect to Bluetooth device
-3,AFT_FECT_DATA,C:\Users\acer\Desktop\DID_01010101.FECT,,,1,PASS,,,,,Flash Fimware to AFT
-4,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
-5,DUT_ENROL_MAC ,"20,255,254,200",,,1,PASS,,,,,
-6,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
-7,AFT_FLASH,C:\Users\acer\Desktop\test_.OTA,,,1,PASS,,,,,Flash Fimware to AFT
-8,WIN_DELAY,0.1,,,1,PASS,,,,,Generate Delay (seconds) 
-9,AFT_READ_VERSION,1,,,1,PASS,,,,,Generate Delay (seconds) 
-10,WIN_SEND_BLE,b'\x11\x00\x00\x00\x00',,,1,PASS,,,,,Send data to device
-11,WIN_CONNECT,00:00:00:01,,,0,PASS,,,,,Connect to Bluetooth device
-12,AFT_RELAY,b'\xF1\x00\',,,0,,,,,,Relay OFF
-13,AFT_RELAY,b'\xF1\x01\',,,0,,,,,,Relay ON
-14,AFT_SWITCH,b'\xF2\x00\',,,0,,,,,,Press Switch
-15,AFT_SWITCH,b'\xF2\x01\',,,0,,,,,,Release Switch
-16,AFT_DIO,b'\xF3\x00\',,,0,,,,,,Read DIO value
-17,AFT_DIO,b'\xF3\x01\0x01',,,0,,,,,,Set DIO value
-18,AFT_DIO,b'\xF3\x01\0x00',,,0,,,,,,Clear DIO value
-19,AFT_ADC,b'\xF4\x00\',,,0,,,,,,Read ADC value
-20,AFT_FLASH,b'\xF3\x00\',,,0,,,,,,Flash Fimware to AFT
+1,PERF_FECTORY_Operation,,,,0,PASS,,,,,
+2,DUT_FFR ,,,,0,PASS,,,,,
+3,WIN_CONNECT,CD1235,,1235,1,PASS,,,,,Connect to Bluetooth device
+4,WIN_SEND_BLE,0B00FFFFFFFF,0.15,,0,PASS,,,,,Claim device 
+5,WIN_SEND_RCV_BLE,04FE700000,0.15,0.1,1,04FE700100,,,,,Read_BL_version
+6,WIN_SEND_RCV_BLE,04F2700000,0.15,0.1,1,04F270FF00,,,,,Read_APP_version
+7,WIN_SEND_RCV_BLE,0x0500000000,0.15,0.1,1,0x0500000000,,,,,Ping and Check if in BL or APP
+8,WIN_FLASH,C:\Users\acer\Desktop\fectDID_01010101.FECT,0.15,0.1,1,PASS,,,,,Writes Fectory Dasta To device
+9,WIN_FLASH,C:\Users\acer\Desktop\test_.OTA,0.15,0.1,1,PASS,,,,,Flash Fimware to Device
+10,WIN_DELAY,5,,,0,PASS,,,,,Generate Delay (seconds) 
+11,WIN_SEND_BLE,0x0B00FFFFFFFF,,,0,PASS,,,,,Claim device 
+12,WIN_BL_VERSION,,,,0,1,,,,,Read_BL_version
+13,WIN_APP_VERSION,,,,0,1,,,,,Read_APP_version
+14,WIN_PING,,,,0,APP,,,,,Check if in BL or APP
+15,WIN_DELAY,0.1,,,0,PASS,,,,,Generate Delay (seconds) 
+16,DUT_ENROL_MAC ,"20,255,254,200",,,0,PASS,,,,,
+17,WIN_DELAY,0.1,,,0,PASS,,,,,Generate Delay (seconds) 
+18,AFT_FLASH,C:\Users\acer\Desktop\test_.OTA,,,0,PASS,,,,,Flash Fimware to AFT
+19,WIN_DELAY,0.1,,,0,PASS,,,,,Generate Delay (seconds) 
+20,AFT_READ_VERSION,1,,,0,PASS,,,,,Generate Delay (seconds) 
+21,WIN_SEND_BLE,b'\x11\x00\x00\x00\x00',,,0,PASS,,,,,Send data to device
+22,WIN_CONNECT,00:00:00:01,,,0,PASS,,,,,Connect to Bluetooth device
+23,AFT_RELAY,b'\xF1\x00\',,,0,,,,,,Relay OFF
+24,AFT_RELAY,b'\xF1\x01\',,,0,,,,,,Relay ON
+25,AFT_SWITCH,b'\xF2\x00\',,,0,,,,,,Press Switch
+26,AFT_SWITCH,b'\xF2\x01\',,,0,,,,,,Release Switch
+27,AFT_DIO,b'\xF3\x00\',,,0,,,,,,Read DIO value
+28,AFT_DIO,b'\xF3\x01\0x01',,,0,,,,,,Set DIO value
+29,AFT_DIO,b'\xF3\x01\0x00',,,0,,,,,,Clear DIO value
+30,AFT_ADC,b'\xF4\x00\',,,0,,,,,,Read ADC value
+31,AFT_FLASH,b'\xF3\x00\',,,0,,,,,,Flash Fimware to AFT

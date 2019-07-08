@@ -12,12 +12,72 @@ import bluetooth
 import csv
 import datetime
 import time
-DATA_SIZE = 64
+RCV_DATA_SIZE = 5
 outpath_file=""
 temp_file_data =""
 sock = None
 bd_addr = None
 #DUT_MAC = [20,255,254,200]
+def intList_toHexList(list):
+	b=[]
+	for item in list:
+		b.append(hex(item))
+	return b
+def is_hex(s):
+    try:
+        int(s, 16)
+        return True
+    except ValueError:
+        return False
+"""
+HexByteConversion
+
+Convert a byte string to it's hex representation for output or visa versa.
+
+ByteToHex converts byte string "\xFF\xFE\x00\x01" to the string "FF FE 00 01"
+HexToByte converts string "FF FE 00 01" to the byte string "\xFF\xFE\x00\x01"
+"""
+
+#-------------------------------------------------------------------------------
+
+def ByteToHex( byteStr ):
+    """
+    Convert a byte string to it's hex string representation e.g. for output.
+    """
+    
+    # Uses list comprehension which is a fractionally faster implementation than
+    # the alternative, more readable, implementation below
+    #   
+    #    hex = []
+    #    for aChar in byteStr:
+    #        hex.append( "%02X " % ord( aChar ) )
+    #
+    #    return ''.join( hex ).strip()        
+
+    return ''.join( [ "%02X " % ord( x ) for x in byteStr ] ).strip()
+
+#-------------------------------------------------------------------------------
+
+def HexToByte( hexStr ): # convert string to raw binary bytes
+    """
+    Convert a string hex byte values into a byte string. The Hex Byte values may
+    or may not be space separated.
+    """
+    # The list comprehension implementation is fractionally slower in this case    
+    #
+    #    hexStr = ''.join( hexStr.split(" ") )
+    #    return ''.join( ["%c" % chr( int ( hexStr[i:i+2],16 ) ) \
+    #                                   for i in range(0, len( hexStr ), 2) ] )
+ 
+    bytes = []
+
+    hexStr = ''.join( hexStr.split(" ") )
+
+    for i in range(0, len(hexStr), 2):
+        bytes.append( chr( int (hexStr[i:i+2], 16 ) ) )
+
+    return ''.join( bytes )
+	
 def DUT_FFR(arg1, arg2, arg3):
 	'''
 	#-----------------------------FDR sequence turn off battery, hold switch turn on power release switch
@@ -48,7 +108,28 @@ def DUT_FFR(arg1, arg2, arg3):
 	'''
 	temp = raw_input("manually FDR the device and press enter: ")
 	return "PASS"
- 
+def WIN_FLASH(arg1, arg2, arg3):
+	temp_data = b'\x00'
+	status = "PASS"
+	try:
+		with open(arg1, 'r') as text_file:
+		# One option is to call readline() explicitly
+		# single_line = text_file.readline()
+
+		# It is easier to use a for loop to iterate each line
+			for line in text_file:
+				line = line.rstrip("\n\r")
+				tx_dat = list(line.split(" "))
+				tx_dat = list(map(int, tx_dat))
+				temp_chk = tx_dat[0]
+				tx_dat = ''.join(format(x, '02x') for x in tx_dat)
+				temp_data = WIN_SEND_RCV_BLE(tx_dat, arg2, arg3)
+				if(((temp_chk != 0xFF) and (temp_chk != 0x07) and (temp_chk != 0x06)) and ((len(temp_data) != 5 ) or temp_data[1] == 0xFF)): #error while flashing , exlude check if its dummy commmand 0xff
+					status = "FAIL"
+					break;
+	except:
+		status = "FAIL"
+	return status
 def DUT_ENROL_MAC(arg1, arg2, arg3):
 	i = 0xF4
 	while( i < 0Xf8) :
@@ -99,22 +180,38 @@ def WIN_CONNECT(arg1, arg2, arg3):
 	
 def WIN_SEND_BLE(arg1, arg2, arg3): # send data to connected socat, pre requisit CONNECT should go Success
 	global sock
-	sock.send(arg1)
+	arg1 = arg1.replace("0x",'')
+	arg2 = arg2.replace(" ",'') # remove spaces
+	hex_data =  HexToByte(arg1)
+	sock.send(hex_data)
+	e = float(arg2) #inter frame delay
+	time.sleep(e)  # responce time is around 100 ms
+	print ( "Sending: " + ByteToHex(hex_data))
+	#print e
 	return "PASS"
 
 def WIN_SEND_RCV_BLE(arg1, arg2, arg3): # send data to connected socat, pre requisit CONNECT should go Success and wait for the responce for arg2 s
 	global sock
-	data = ""
-	sock.send(arg1)
-	time.sleep(0.15)  # responce time is around 100 ms
-	data = sock.recv(DATA_SIZE)
-	if (data) :
-		print "Received: " + data
-		return (data)
-	   
-	else:
-		print "Received: Nothing !!!" 
-		return("")
+	data = "" 
+	arg3 = arg3.replace(" ",'') # remove spaces
+	e = float(arg3) #inter frame delay
+	sock.settimeout(e)
+	#flush the data
+	try:
+		data = sock.recv(RCV_DATA_SIZE)
+	except:
+		data = "" #dummy
+	WIN_SEND_BLE(arg1, arg2, arg3)
+	#print e
+	data = b'\xFF\xFF\xFF\xFF\xFF'
+	try:
+		data = sock.recv(RCV_DATA_SIZE)
+		print "Received: " + ByteToHex(data) 
+	except:
+		print "Received: Nothing or bytes less then " + str(RCV_DATA_SIZE)
+		data = b'\xFF\xFF\xFF\xFF'
+	sock.settimeout(0)
+	return(data)
 #---------------connect BLE docgal to PC-------------------
 
 # try connecing to ble dongal
@@ -160,24 +257,33 @@ with open(path_file, 'r') as csvFile:
 			tmp_per3 = row['PERAM_03'].strip()	# read nth row	command
 			expected_out = row['EXPECTED'].strip()
 			observed_out = ""
-			print"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" # command spliter
 			if(iterations is - 1):
 				temp_str = (row['ITERATIONS'].strip())
 				if (temp_str.isdigit()):
 					iterations = int(temp_str,10)
 					iterations_base = iterations
 					if(iterations == 0):
-						print "Skipping :" + tmp_cmd
+						#print ""###"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" # command spliter
+						#print ""###"Skipping :" + tmp_cmd
+						pass #this is to avoid syntex error of empty if statement
 					else:
+						print"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" # command spliter
 						print "Executing :" + tmp_cmd + " for " + str(iterations) + " Iterations"
 			while(iterations > 0) :
-				try:
-					observed_out = locals()[tmp_cmd](tmp_per1, tmp_per2, tmp_per3)
-				except:
-					print"Error : Executing command (" + tmp_cmd + ")"
+				###try:
+				observed_out = locals()[tmp_cmd](tmp_per1, tmp_per2, tmp_per3)
+				###except:
+				###	print"Error : Executing command (" + tmp_cmd + ")"
 				#print "OBS" + observed_out
 				#print "EXP" + expected_out
-				if(expected_out	 == observed_out): #and execute it
+				expected_out = expected_out.replace("0x","")
+				if(is_hex(expected_out)): #if its hex 
+					# convert to raw and compare
+					if(observed_out == HexToByte(expected_out)):
+						out_temp = "PASS"
+					else:
+						out_temp = "FAIL"
+				elif(expected_out == observed_out): #its other string
 					out_temp = "PASS"
 				else:
 					out_temp = "FAIL"
@@ -194,7 +300,10 @@ with open(path_file, 'r') as csvFile:
 				else:
 					row['RESULT'] = "SKIPPED"
 			time_after = time.time()
-			row['OBSERVED'] = observed_out
+			if(is_hex(expected_out)):
+				row['OBSERVED'] = ByteToHex(observed_out)
+			else:
+				row['OBSERVED'] = observed_out
 			row['TIME_STAMP'] = datetime.datetime.fromtimestamp(time_now).strftime('%Y-%m-%d %H:%M:%S')
 			row['DURATION'] = str(time_after - time_now)
 			myFile = open(outpath_file, 'ab+')
